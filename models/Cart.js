@@ -25,19 +25,18 @@ class Cart {
     }
   }
 
-  static async add(productName) {
+  static async add(product) {
+    if (!product || !product.name || !product.price) {
+      console.error("Invalid product object provided to Cart.add");
+      return;
+    }
+
     const db = getDatabase();
 
     try {
-      const product = await Product.findByName(productName);
-
-      if (!product) {
-        throw Error(`Product '${productName}' not found`);
-      }
-
       const cart = await this.getCart();
       const searchedProduct = cart.items.find(
-        (item) => item.product.name === productName
+        (item) => item.product.name === product.name
       );
 
       if (searchedProduct) {
@@ -57,11 +56,9 @@ class Cart {
   static async getItems() {
     try {
       const cart = await this.getCart();
-
       return cart.items;
     } catch (error) {
       console.error("Error occurred while searching for products in cart");
-
       return [];
     }
   }
@@ -83,8 +80,6 @@ class Cart {
   }
 
   static async getTotalPrice() {
-    const db = getDatabase();
-
     try {
       const cart = await this.getCart();
       const totalPrice = cart.items.reduce(
@@ -95,7 +90,7 @@ class Cart {
       return totalPrice;
     } catch (error) {
       console.error(
-        "Error occurred while calcualting total price of items in cart"
+        "Error occurred while calculating total price of items in cart"
       );
 
       return 0;
@@ -111,6 +106,22 @@ class Cart {
         .updateOne({}, { $set: { items: [] } });
     } catch (error) {
       console.error("Error occurred while clearing cart");
+    }
+  }
+
+  static async deleteProductByName(name) {
+    try {
+      const cart = await this.getCart();
+      const updatedItems = cart.items.filter(
+        (item) => item.product.name !== name
+      );
+
+      const db = getDatabase();
+      await db
+        .collection(COLLECTION_NAME)
+        .updateOne({}, { $set: { items: updatedItems } });
+    } catch (error) {
+      console.error("Error occurred while deleting product from cart:", error);
     }
   }
 }

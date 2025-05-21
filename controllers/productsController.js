@@ -67,3 +67,16 @@ exports.deleteProduct = async (request, response) => {
 
   response.status(STATUS_CODE.OK).json({ success: true });
 };
+
+exports.addProduct = async (req, res) => {
+  const { name, description, price } = req.body;
+
+  if (!name || !description || !price) {
+    return res.status(STATUS_CODE.BAD_REQUEST).json({ error: "Invalid product data" });
+  }
+
+  await Product.add({ name, description, price: parseFloat(price) });
+
+  res.redirect(STATUS_CODE.FOUND, "/products/new");
+};
+
